@@ -4,7 +4,18 @@ import { html, render } from "lit-html";
 
 let scale, tileScale, asgCanvas, dmCanvas, tileCanvas, asgCtx, dmCtx, tileCtx;
 
-let colors = ["#fdee19", "#e77b5a"];
+let colors = [
+  "#7597d1",
+  "#324679",
+  "#fffbbc",
+  "#ffcbe8",
+  "#7e0cc1",
+  "#177d3d",
+  "#cf2929",
+  "#232021",
+  "#d174a3",
+  "#ff5900",
+];
 let depths = [
   "#000",
   "#111",
@@ -27,18 +38,20 @@ let activeTool = "brush";
 let activeDepth = 6;
 let activeColor = 0;
 
-let depthMap = Bimp.empty(200, 100, 0);
-depthMap = depthMap.rect({ x: 20, y: 20 }, { x: 50, y: 40 }, 5);
-depthMap = depthMap.rect({ x: 40, y: 30 }, { x: 70, y: 5 }, 9);
-depthMap = depthMap.rect({ x: 45, y: 25 }, { x: 80, y: 45 }, 15);
+let depthMap = Bimp.empty(100, 100, 0);
+for (let i = 1; i < 16; i++) {
+  let offset = i * 3;
+  depthMap = depthMap.rect(
+    { x: offset, y: offset },
+    { x: 100 - offset - 1, y: 100 - offset - 1 },
+    i
+  );
+}
 
 let tile = new Bimp(
-  12,
-  3,
-  [
-    0, 1, 0, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 1,
-    1, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1,
-  ]
+  24,
+  8,
+  Array.from({ length: 24 * 8 }, () => Math.floor(Math.random() * 2))
 );
 
 const iconMap = {
@@ -111,43 +124,31 @@ function shift(bitmap, startPos, value) {
   return onMove;
 }
 
-function autostereogram(depthMap, baseTile, colors) {
-  let pixels = [];
-  let tile = baseTile.make2d();
+function autostereogram(dm, colorTile) {
+  // pad one tile width on the left because we need an extra tile when overlapping
+  let depthMap = dm.pad(colorTile.width, 0, 0, 0, 0);
+  let result = [];
 
   for (let y = 0; y < depthMap.height; y++) {
-    let currentDepth = depthMap.at(0, y);
-    let currentPattern = [...tile[y % baseTile.height]];
-    let patternLength = baseTile.width;
-    let position = 0; // Position in the base pattern
-
+    let row = Array(depthMap.width);
     for (let x = 0; x < depthMap.width; x++) {
-      let nextDepth = depthMap.at(x, y);
-      if (nextDepth < currentDepth) {
-        // remove a pixel from the current pattern if the next pixel is at a lower depth
-        // Like looking down a staircase
-        currentPattern.splice(position, 1);
-        patternLength--;
-        if (position == patternLength) position = 0; // Restart if we hit the end of the base pattern
+      // depth at (x,y) specifies the offset we'll add to the current x
+      let depthOffset = depthMap.at(x, y);
+
+      if (x < colorTile.width) {
+        // Use the color tile value if we're still less than a tile in
+        let tileX = (x + depthOffset) % colorTile.width;
+        let tileY = y % colorTile.height;
+        row[x] = colorTile.at(tileX, tileY);
+      } else {
+        // Otherwise, look back one tile in the current row result
+        row[x] = row.at(x + depthOffset - colorTile.width);
       }
-      if (nextDepth > currentDepth) {
-        // add a random pixel to the current pattern if the next pixel is at a higher depth
-        // Like looking up a staircase
-        currentPattern.splice(
-          position,
-          0,
-          Math.floor(Math.random() * colors.length)
-        );
-        patternLength++;
-      }
-      currentDepth = nextDepth;
-      pixels.push(currentPattern[position]);
-      position++;
-      if (position == patternLength) position = 0;
     }
+    result.push(...row);
   }
 
-  return new Bimp(depthMap.width, depthMap.height, pixels);
+  return new Bimp(depthMap.width, depthMap.height, result);
 }
 
 function drawBimp(ctx, scale, bitmap, colorTable) {
@@ -256,7 +257,7 @@ function sizeCanvases() {
     tilebbox.height / tile.height
   );
 
-  asgCanvas.width = depthMap.width * scale;
+  asgCanvas.width = (depthMap.width + tile.width) * scale;
   asgCanvas.height = depthMap.height * scale;
 
   dmCanvas.width = depthMap.width * scale;
@@ -314,16 +315,16 @@ function downloadPNG() {
   );
 }
 
-function downloadBMP() {
-  let asg = autostereogram(depthMap, tile, colors);
+function downloadBMP(bimp, palette, fileName) {
+  // let asg = autostereogram(depthMap, tile, colors);
 
-  const bmp2d = asg.make2d();
-  const rgbPalette = colors.map((hex) => hexToRgb(hex));
+  const bmp2d = bimp.make2d();
+  const rgbPalette = palette.map((hex) => hexToRgb(hex));
   const im = document.createElement("img");
 
   bmp_lib.render(im, bmp2d, rgbPalette);
 
-  download(im.src, "autostereogram.bmp");
+  download(im.src, fileName);
 }
 
 function view() {
@@ -405,8 +406,17 @@ function view() {
     <div id="right">
       <canvas id="autostereogram"></canvas>
       <div class="controls">
+        <span>${depthMap.width + tile.width} x ${depthMap.height}</span>
         <button @click=${() => downloadPNG()}>Download PNG</button>
-        <button @click=${() => downloadBMP()}>Download BMP</button>
+        <button
+          @click=${() =>
+            downloadBMP(
+              autostereogram(depthMap, tile, colors),
+              colors,
+              "autostereogram.bmp"
+            )}>
+          Download BMP
+        </button>
       </div>
     </div>
   </div>`;

@@ -51,20 +51,33 @@ export class Bimp {
     };
   }
 
-  pad(paddingX, paddingY, color) {
-    const filled = Array(paddingY * (this.width + 2 * paddingX)).fill(color);
-    const col = Array(paddingX).fill(color);
+  pad(paddingLeft, paddingRight, paddingTop, paddingBottom, color) {
+    const filled = Array(
+      (paddingTop + paddingBottom) * (this.width + paddingLeft + paddingRight)
+    ).fill(color);
+
+    const left = Array(paddingLeft).fill(color);
+    const right = Array(paddingRight).fill(color);
+
     let twod = this.make2d();
 
-    return new Bimp(this.width + 2 * paddingX, this.height + 2 * paddingY, [
-      ...twod.reduce(
-        (acc, row) => {
-          return [...acc, ...col, ...row, ...col];
-        },
-        [...filled]
-      ),
-      ...filled,
-    ]);
+    return new Bimp(
+      this.width + paddingLeft + paddingRight,
+      this.height + paddingTop + paddingBottom,
+      [
+        ...twod.reduce(
+          (acc, row) => {
+            return [...acc, ...left, ...row, ...right];
+          },
+          [...filled]
+        ),
+        ...filled,
+      ]
+    );
+  }
+
+  colorSet() {
+    return new Set(this.pixels);
   }
 
   resize(width, height, emptyColor = 0) {
