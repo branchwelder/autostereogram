@@ -6,7 +6,8 @@
     "lit-html": "^3.3.0",
     "vite": "^5.1.4",
     "tailwindcss": "^4.1.7",
-    "@tailwindcss/vite": "^4.1.7"
+    "@tailwindcss/vite": "^4.1.7",
+    "split.js": "^1.6.5"
   },
   "scripts": {
     "dev": "vite",

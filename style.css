@@ -1,108 +1,26 @@
+@import "tailwindcss";
+
 html,
 body {
-  margin: 0;
-  padding: 0;
-  font-family: Inter;
-  background-color: #303030;
-  color: #f0f0f0;
+  @apply w-full h-full;
 }
 
 canvas {
-  outline: 1px solid black;
   image-rendering: pixelated;
 }
 
-input[type="number"] {
-  width: 50px;
+.gutter {
+  background-color: var(--color-gray-800);
+  background-repeat: no-repeat;
+  background-position: 50%;
 }
 
-.site {
-  display: flex;
-  gap: 5px;
-  height: 100vh;
-  overflow: hidden;
+.gutter.gutter-horizontal {
+  background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAeCAYAAADkftS9AAAAIklEQVQoU2M4c+bMfxAGAgYYmwGrIIiDjrELjpo5aiZeMwF+yNnOs5KSvgAAAABJRU5ErkJggg==");
+  cursor: col-resize;
 }
 
-#left,
-#right {
-  width: 50%;
-  display: flex;
-  align-items: flex-start;
-  flex-direction: column;
-  gap: 10px;
-  padding: 10px;
-}
-
-#tile-container,
-#depth-map-container {
-  width: 100%;
-  flex: 1;
-}
-
-.controls {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-}
-
-.color-select {
-  border: 0;
-  outline: 0;
-  cursor: pointer;
-  color: inherit;
-  height: 25px;
-  width: 25px;
-  background-color: var(--color);
-  border-radius: 4px;
-  box-shadow: 0 0 2px 0 black;
-}
-
-.color-select.active {
-  outline: 1px solid white;
-}
-
-.color-select-container {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.tool-select {
-  display: flex;
-  justify-content: center;
-  gap: 5px;
-}
-
-.add-color {
-  border: 0;
-  outline: 0;
-  cursor: pointer;
-  background-color: #4d4d4d;
-  color: inherit;
-  height: 25px;
-  width: 25px;
-  border-radius: 4px;
-  box-shadow: 0 0 2px 0 black;
-}
-
-.icon-btn {
-  border: 0;
-  outline: 0;
-  cursor: pointer;
-  background-color: #4d4d4d;
-  color: inherit;
-  height: 30px;
-  width: 30px;
-  border-radius: 8px;
-  box-shadow: 0 0 2px 0 black;
-}
-
-.icon-btn.active {
-  background-color: #7362b8;
-  color: #fff;
-}
-
-.icon-btn:hover {
-  background-color: #60597c;
-  color: #fff;
+.gutter.gutter-vertical {
+  background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAFAQMAAABo7865AAAABlBMVEVHcEzMzMzyAv2sAAAAAXRSTlMAQObYZgAAABBJREFUeF5jOAMEEAIEEFwAn3kMwcB6I2AAAAAASUVORK5CYII=");
+  cursor: row-resize;
 }
