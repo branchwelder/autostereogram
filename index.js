@@ -54,6 +54,95 @@ let tile = new Bimp(
   Array.from({ length: 24 * 8 }, () => Math.floor(Math.random() * 2))
 );
 
+function processFileUpload(e) {
+  const file = e.target.files[0];
+  if (!file) {
+    return;
+  }
+
+  const reader = new FileReader();
+
+  reader.onload = function (e) {
+    const img = new Image();
+    img.src = e.target.result;
+
+    img.onload = function () {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      canvas.width = img.width;
+      canvas.height = img.height;
+
+      // Draw the image on the canvas
+      ctx.drawImage(img, 0, 0, img.width, img.height);
+
+      // Get the pixel data of the grayscale image
+      const imageData = ctx.getImageData(0, 0, img.width, img.height);
+      const pixels = imageData.data; // Pixel data in RGBA format
+
+      // Convert RGBA to grayscale values and store them in a 2D array
+      const grayArray = [];
+      const grayValuesSet = new Set();
+
+      for (let y = 0; y < img.height; y++) {
+        const row = [];
+        for (let x = 0; x < img.width; x++) {
+          const index = (y * img.width + x) * 4;
+          const r = pixels[index]; // Red channel
+          const g = pixels[index + 1]; // Green channel
+          const b = pixels[index + 2]; // Blue channel
+
+          // Calculate the grayscale value (simple average)
+          const gray = Math.round((r + g + b) / 3);
+          row.push(gray);
+          grayValuesSet.add(gray);
+        }
+        grayArray.push(row);
+      }
+
+      console.log(grayArray);
+
+      // Convert set of unique gray values to an array and sort it
+      const uniqueGrays = Array.from(grayValuesSet).sort((a, b) => a - b);
+
+      // Create a map from gray values to index
+      const grayToIndexMap = {};
+      uniqueGrays.forEach((gray, idx) => {
+        grayToIndexMap[gray] = idx;
+      });
+
+      // Convert the grayscale array to an indexed array with the remapped indices
+      const indexedArray = grayArray.map((row) =>
+        row.map((value) => grayToIndexMap[value])
+      );
+
+      resizeDepthMap(indexedArray[0].length, indexedArray.length);
+      depthMap = new Bimp(
+        indexedArray[0].length,
+        indexedArray.length,
+        indexedArray.flat()
+      );
+      redraw();
+
+      //    // Output the results
+      //    const output = document.getElementById("output");
+      //    output.innerHTML = `
+      //                   <p>Unique gray colors: ${uniqueGrays.join(", ")}</p>
+      //                   <p>Number of unique gray colors: ${
+      //                     uniqueGrays.length
+      //                   }</p>
+      //                   <p>Indexed 2D array (first 10x10 portion):</p>
+      //                   <pre>${indexedArray
+      //                     .slice(0, 10)
+      //                     .map((row) => row.slice(0, 10))
+      //                     .map((row) => row.join(", "))
+      //                     .join("\n")}</pre>
+      //               `;
+      //  };
+    };
+  };
+  reader.readAsDataURL(file);
+}
+
 const iconMap = {
   flood: "fa-fill-drip fa-flip-horizontal",
   brush: "fa-paintbrush",
@@ -329,6 +418,11 @@ function downloadBMP(bimp, palette, fileName) {
 
 function view() {
   return html`<div class="site">
+    <input
+      type="file"
+      id="imageInput"
+      accept="image/png"
+      @change=${(e) => processFileUpload(e)} />
     <div id="left">
       <div class="controls">
         <span>width</span>
